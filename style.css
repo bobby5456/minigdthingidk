@@ -1,0 +1,422 @@
+:root{
+  --bg:#ffffff;
+  --fg:#111;
+  --muted:#666;
+  --accent:#000;
+  --toolbar-height:140px; /* increased to fit panels */
+  --sidebar-width:260px;
+  --canvas-bg:#fafafa;
+  font-family: "Noto Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+*{box-sizing:border-box}
+html,body,#app{height:100%;margin:0;background:var(--bg);color:var(--fg)}
+header{
+  height:56px;display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #eee;position:relative;
+}
+.title{font-weight:700}
+.controls{display:flex;gap:8px;align-items:center}
+.btn{
+  background:#111;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:600;
+}
+.btn.small{padding:8px 12px;font-size:15px;border-radius:6px}
+main{display:flex;height:calc(100% - 56px - var(--toolbar-height));}
+#canvas-wrap{
+  flex:1;display:flex;align-items:center;justify-content:center;background:var(--canvas-bg);
+  position:relative;overflow:hidden;
+}
+#world{background:linear-gradient(180deg,#fff,#f6f6f6);max-width:100%;max-height:100%;}
+.panel{background:#fff;border-radius:8px;padding:10px;margin-bottom:12px;box-shadow:0 1px 0 rgba(0,0,0,0.03)}
+#object-toolbar{
+  height:var(--toolbar-height);
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  padding:12px;
+  border-top:1px solid #eee;
+  background:#fff;
+  padding-top:12px;
+  box-sizing:border-box;
+  /* tabs are fixed; panels/objects live in #toolbar-scroll which handles overflow */
+}
+
+#toolbar-scroll{
+  flex:1;
+  display:flex;
+  gap:8px;
+  align-items:flex-start;
+  overflow-x:auto; /* only this container scrolls horizontally */
+  padding-bottom:2px;
+}
+
+#toolbar-panels{display:flex;gap:8px;align-items:flex-start}
+.small-panel{width:220px;padding:8px}
+#edit-panel{width:220px;padding:8px}
+.object-btn{
+  width:72px;height:64px;border:1px solid #ddd;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px;background:#fff;cursor:pointer;
+}
+.object-btn.selected{outline:3px solid #111}
+/* style for multi-select button when active */
+.tab-btn.selected ~ #toolbar-panels .btn.selected { }
+/* Multi-select button selected state */
+#multi-select-btn.selected{
+  outline: 2px solid rgba(20,160,60,0.9);
+  background: #eaf8ef;
+  color: #114b26;
+}
+.obj-preview{width:36px;height:24px;border-radius:3px;background:#111}
+.hint{font-size:12px;color:var(--muted)}
+.info{font-size:13px;margin-top:8px}
+label{display:block;margin:8px 0}
+input[type=number]{width:100%}
+canvas{cursor:crosshair}
+footer#object-toolbar::-webkit-scrollbar{height:8px}
+
+/* tabs */
+/* Stack section buttons vertically */
+#toolbar-tabs{
+  display:flex;
+  flex-direction:column;   /* vertical stack */
+  gap:8px;
+  align-items:stretch;     /* make buttons fill the width of the tab area */
+  padding:8px;
+  border-radius:8px;
+  width:120px;             /* reserve a consistent vertical tab area */
+  box-sizing:border-box;
+}
+.tab-btn{
+  background:#f4f4f4;
+  border:1px solid #e6e6e6;
+  padding:8px 10px;
+  border-radius:6px;
+  cursor:pointer;
+  font-weight:600;
+  text-align:left;
+  width:100%;
+}
+.tab-btn.selected{background:#111;color:#fff;border-color:#111}
+
+/* objects panel styling */
+.objects-panel{display:flex;gap:8px;align-items:center}
+.hidden{display:none !important}
+
+/* floating zoom controls placed above canvas (bottom-left) */
+.zoom-floating{
+  position:absolute;
+  bottom:48px;             /* moved up by one button height (36px) from 12px) */
+  left:12px;
+  display:flex;
+  flex-direction:column;   /* stack buttons vertically (plus above minus) */
+  gap:8px;
+  background:rgba(255,255,255,0.95);
+  padding:6px;
+  border-radius:10px;
+  box-shadow:0 3px 10px rgba(0,0,0,0.06);
+  z-index:30;
+}
+.zoom-floating .btn.small{
+  /* slightly smaller, square buttons */
+  width:36px;
+  height:36px;
+  padding:0;
+  font-size:16px;
+  border-radius:8px;
+  background:#111;
+  color:#fff;
+  border:none;
+}
+
+/* small on-screen movement buttons for platformer mode (bottom-left above zoom controls) */
+.platformer-move-wrap{
+  position:absolute;
+  left:12px;
+  bottom:12px;
+  display:flex;
+  gap:8px;
+  z-index:60;
+}
+.platformer-move-wrap .btn{
+  width:64px;
+  height:64px;
+  padding:0;
+  border-radius:12px;
+  font-size:22px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#111;
+  color:#fff;
+  border:none;
+  box-shadow:0 10px 26px rgba(0,0,0,0.16);
+}
+.platformer-move-wrap.hidden{ display:none !important }
+/* ensure these buttons sit above zoom-floating when both present */
+.zoom-floating{ z-index:30 }
+
+/* place multi-select button at far right inside the Edit panel instead */
+#edit-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* NOTE: removed special positioning for #multi-select-btn so it stays stacked below Delete
+   and inherits the same .btn.small sizing used by Deselect/Delete. */
+/* (previous positioning rule removed) */
+
+/* NEW: hide zoom controls and bottom toolbar while playing */
+.playing .zoom-floating,
+.playing #object-toolbar {
+  display: none !important;
+}
+
+/* NEW: hide top-right edit buttons and undo/redo while playing */
+.playing #edit-buttons-wrap,
+/* hide only the undo/redo row (first child) so the pause-wrap remains visible while playing */
+.playing #undo-group > div:first-child {
+  display: none !important;
+}
+
+/* Settings modal */
+.settings-modal{
+  position:fixed;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  background: rgba(0,0,0,0.6);
+  border-radius:10px;
+  box-shadow:0 8px 30px rgba(0,0,0,0.2);
+  padding:0;                  /* remove internal padding so sections align */
+  z-index:100;
+  width:880px;               /* increased width to make modal wider */
+  max-width:96%;
+  max-height:80vh;          /* limit height so it is less tall */
+  overflow:hidden;          /* contain internal scroll area */
+  color: #fff;
+  display:flex;
+  flex-direction:column;
+}
+
+/* top area with color pickers - non-scrolling */
+.settings-top{
+  padding:16px;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+
+/* scrollable content area */
+.settings-scroll{
+  padding:12px 16px;
+  overflow:auto;
+  flex:1 1 auto;
+  /* increased vertical rhythm for options inside the scroller */
+  display:block;
+  gap:12px;
+}
+
+/* add explicit spacing between logical option rows inside scroller */
+.settings-scroll .settings-row{
+  margin-bottom:14px; /* extra breathing room between options */
+  display:block;
+}
+
+/* make labels inside the scroller a bit more separated and readable */
+.settings-scroll label{
+  display:block;
+  margin-bottom:8px;
+}
+
+/* slightly increase spacing for groups of controls */
+.settings-scroll .settings-row > *{
+  margin-top:6px;
+}
+
+/* actions fixed outside the scroller */
+.settings-actions-fixed{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  padding:10px 16px;
+  border-top:1px solid rgba(255,255,255,0.04);
+  background: rgba(0,0,0,0.45);
+}
+
+/* keep existing .settings-actions for compatibility */
+.settings-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+
+/* floating edit buttons stack in the top-right */
+#edit-buttons-wrap{
+  position:fixed;
+  top:72px; /* moved upward so buttons sit just below top UI */
+  right:18px;
+  display:flex;
+  flex-direction:row; /* two columns side-by-side */
+  gap:10px;
+  z-index:140;
+}
+#edit-buttons-wrap .edit-buttons-col{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  align-items:flex-start; /* align columns at the top by default so top-row buttons line up */
+}
+#edit-buttons-wrap .edit-buttons-col:not(.glue-col){
+  align-items:center;
+}
+#edit-buttons-wrap button{
+  width:64px;
+  height:64px;
+  border-radius:10px;
+  border:none;
+  padding:4px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 6px 18px rgba(0,0,0,0.12);
+  background: transparent !important;
+  cursor:pointer;
+}
+#edit-buttons-wrap img{width:100%;height:100%;object-fit:cover;border-radius:0;display:block}
+/* rotate the copy/paste icon -90deg for the top button */
+#copy-paste-btn img{ transform: rotate(-90deg); }
+
+/* Ensure glue button is always visible and matches other top-right buttons */
+#glue-btn{
+  display:flex !important;
+  width:64px;
+  height:64px;
+  border-radius:10px;
+  border:none;
+  padding:4px;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 6px 18px rgba(0,0,0,0.12);
+  background: transparent !important;
+  cursor:pointer;
+  z-index: 150; /* sit above nearby UI */
+  opacity: 1 !important;
+}
+/* make sure the glue column doesn't collapse */
+.edit-buttons-col.glue-col{ min-width:64px; display:flex; align-items:flex-start; justify-content:flex-start }
+/* ensure the glue image fills its button */
+#glue-btn img{ width:100%; height:100%; object-fit:contain; display:block }
+/* disabled state look consistent with other buttons */
+#glue-btn.disabled,
+#glue-btn[disabled]{ pointer-events:none; opacity:0.45; }
+
+/* make sure the glue image visually fades when disabled so the button reads as transparent/disabled */
+#glue-btn.disabled img,
+#glue-btn[disabled] img{
+  opacity: 0.25 !important;        /* make the icon translucent */
+  filter: grayscale(60%) contrast(0.9); /* desaturate it for a disabled look */
+  transition: opacity 160ms linear, filter 160ms linear; /* smooth state change */
+}
+/* disabled tooltip / pointer appearance handled elsewhere */
+
+/* disabled state for edit-object button: make texture 50% transparent and show not-allowed cursor */
+#edit-object-btn.disabled,
+#edit-object-btn[disabled]{
+  pointer-events: none;
+  opacity: 1; /* keep wrapper visible but image changed below */
+}
+#edit-object-btn.disabled img,
+#edit-object-btn[disabled] img{
+  opacity: 0.5;
+  filter: saturate(0.9);
+  cursor: not-allowed;
+}
+
+/* Add matching disabled styling for the Edit Group button */
+#edit-group-btn.disabled,
+#edit-group-btn[disabled]{
+  pointer-events: none;
+  opacity: 1;
+}
+#edit-group-btn.disabled img,
+#edit-group-btn[disabled] img{
+  opacity: 0.5;
+  filter: saturate(0.9);
+  cursor: not-allowed;
+}
+
+/* disabled state for copy-paste button: texture semi-transparent and not clickable */
+#copy-paste-btn.disabled,
+#copy-paste-btn[disabled]{
+  pointer-events: none;
+  opacity: 1;
+}
+#copy-paste-btn.disabled img,
+#copy-paste-btn[disabled] img{
+  opacity: 0.45;
+  filter: saturate(0.7);
+  cursor: not-allowed;
+}
+
+/* Alpha button styling matches other top-right buttons and disabled look */
+#alpha-btn{
+  width:64px;
+  height:64px;
+  border-radius:10px;
+  border:none;
+  padding:4px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 6px 18px rgba(0,0,0,0.12);
+  background: transparent !important;
+  cursor:pointer;
+}
+#alpha-btn img{width:100%;height:100%;object-fit:cover;display:block}
+#alpha-btn.disabled,
+#alpha-btn[disabled]{ pointer-events:none; opacity:1; }
+#alpha-btn.disabled img,
+#alpha-btn[disabled] img{ opacity:0.45; filter: saturate(0.7); cursor:not-allowed }
+
+/* Add disabled styling for the top-right deselect button to match other edit buttons */
+#deselect-topright-btn.disabled,
+#deselect-topright-btn[disabled]{
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+/* Simple modal for color editor */
+.edit-object-modal{
+  position:fixed;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  background:#fff;
+  padding:14px;
+  border-radius:10px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.2);
+  z-index:130;
+  width:320px;
+  max-width:90%;
+}
+.edit-object-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,0.35); z-index:125; }
+.edit-object-row{ display:flex; gap:8px; align-items:center; margin:10px 0; }
+.edit-object-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
+
+/* disabled state for separate Copy and Paste buttons */
+#copy-btn.disabled,
+#copy-btn[disabled]{
+  pointer-events: none;
+  opacity: 1; /* keep container visible but change the image appearance */
+}
+#copy-btn.disabled img,
+#copy-btn[disabled] img{
+  opacity: 0.45;
+  filter: saturate(0.7);
+  cursor: not-allowed;
+}
+
+#paste-btn.disabled,
+#paste-btn[disabled]{
+  pointer-events: none;
+  opacity: 1;
+}
+#paste-btn.disabled img,
+#paste-btn[disabled] img{
+  opacity: 0.45;
+  filter: saturate(0.7);
+  cursor: not-allowed;
+}
