@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mini Geometry Dash — Editor & Player</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <header>
+      <div id="undo-group" style="display:flex;flex-direction:column;gap:8px;position:absolute;left:12px;top:72px;z-index:20">
+        <div style="display:flex;gap:8px;align-items:center">
+          <button id="undo-btn" class="btn small" title="Undo">⟲</button>
+          <button id="redo-btn" class="btn small" title="Redo">⟳</button>
+          <button id="header-delete-btn" class="btn small" title="Delete" style="background:#b22">Delete</button>
+        </div>
+        <div id="pause-wrap" style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+          <button id="pause-btn" class="btn small" title="Pause" style="display:none">Pause</button>
+        </div>
+      </div>
+      <div class="title">Mini Geometry Dash</div>
+      <div class="controls">
+        <button id="settings-btn" class="btn">Settings</button>
+        <button id="mode-toggle" class="btn">Editor</button>
+        <button id="play-btn" class="btn">Play</button>
+        <button id="save-btn" class="btn">Save</button>
+        <button id="load-btn" class="btn">Load</button>
+        <input id="file-input" type="file" accept=".json" style="display:none"/>
+      </div>
+    </header>
+
+    <main>
+      <div id="canvas-wrap">
+        <div class="zoom-floating">
+          <button id="zoom-in" class="btn small">+</button>
+          <button id="zoom-out" class="btn small">−</button>
+        </div>
+        <canvas id="world"></canvas>
+      </div>
+
+      <!-- sidebar removed — panels moved to footer -->
+    </main>
+
+    <footer id="object-toolbar">
+      <!-- tabs to switch between Objects and Tools -->
+      <div id="toolbar-tabs" class="panel">
+        <button id="tab-objects" class="tab-btn selected">Objects</button>
+        <button id="tab-tools" class="tab-btn">Tools</button>
+      </div>
+
+      <!-- create a dedicated scrollable area for panels & objects so tabs stay fixed -->
+      <div id="toolbar-scroll" class="toolbar-scroll">
+        <div id="toolbar-panels" class="panels">
+          <div class="panel small-panel" id="tools-panel">
+            <div class="info">
+              <div>Mode: <span id="mode-label">Editor</span></div>
+              <div>Zoom: <span id="zoom-label">1.00x</span></div>
+              <div>Cursor: <span id="cursor-pos">0,0</span></div>
+            </div>
+            <!-- Fullscreen button added to Tools panel -->
+            <div style="margin-top:8px">
+              <button id="fullscreen-btn" class="btn small" style="padding:6px 10px">Fullscreen</button>
+            </div>
+            <!-- new editor grid visibility toggle -->
+            <div style="margin-top:8px">
+              <label style="display:flex;align-items:center;gap:8px"><input id="editor-hide-grid" type="checkbox" /> Hide grid in editor</label>
+            </div>
+          </div>
+
+          <div class="panel small-panel" id="grid-panel">
+            <label><input type="checkbox" id="snap-toggle" checked /> Snap to grid</label>
+            <label>Grid size: <input id="grid-size" type="number" value="32" min="8" step="8" /></label>
+          </div>
+
+          <!-- Edit panel -->
+          <div class="panel small-panel hidden" id="edit-panel">
+            <div style="margin-top:8px;display:flex;gap:12px;align-items:center;justify-content:space-between">
+              <div style="display:flex;flex-direction:row;gap:12px;align-items:center">
+                <!-- Left column: Up/Down and Left/Right arrow buttons -->
+                <div style="display:flex;flex-direction:column;gap:8px;align-items:center">
+                  <div style="display:flex;gap:8px;align-items:center">
+                    <button id="move-up" class="btn small" style="width:44px;height:44px;font-size:16px;padding:0">↑</button>
+                    <button id="move-down" class="btn small" style="width:44px;height:44px;font-size:16px;padding:0">↓</button>
+                  </div>
+                  <div style="display:flex;gap:8px;margin-top:6px">
+                    <button id="move-left" class="btn small" style="width:44px;height:44px;font-size:16px;padding:0">←</button>
+                    <button id="move-right" class="btn small" style="width:44px;height:44px;font-size:16px;padding:0">→</button>
+                  </div>
+                </div>
+                <!-- Right column: half-grid move buttons (moved to the right of the regular arrows) -->
+                <div style="display:flex;flex-direction:column;gap:8px;align-items:center">
+                  <div style="display:flex;gap:8px;align-items:center">
+                    <button id="move-up-half" class="btn small" style="width:38px;height:34px;font-size:13px;padding:0">↑½</button>
+                    <button id="move-down-half" class="btn small" style="width:38px;height:34px;font-size:13px;padding:0">↓½</button>
+                  </div>
+                  <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+                    <button id="move-left-half" class="btn small" style="width:38px;height:34px;font-size:13px;padding:0">←½</button>
+                    <button id="move-right-half" class="btn small" style="width:38px;height:34px;font-size:13px;padding:0">→½</button>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <button id="deselect-btn" class="btn small">Deselect</button>
+                <button id="delete-btn" class="btn small" style="background:#b22">Delete</button>
+                <button id="multi-select-btn" class="btn small" title="Toggle multi-select">Multi-select</button>
+                <button id="scale-btn" class="btn small" title="Scale selected object(s)">Scale</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- object buttons container (JS will populate) -->
+        <div id="objects-panel" class="objects-panel"></div>
+      </div>
+    </footer>
+  </div>
+
+  <script type="module" src="app.js"></script>
+
+  <!-- Edit Object (top-right) and Edit Group (below it) -->
+  <div id="edit-buttons-wrap">
+    <div class="edit-buttons-col glue-col">
+      <button id="glue-btn" title="Glue physics blocks">
+        <img src="IMG_3127.png" alt="Glue" />
+      </button>
+    </div>
+    <div class="edit-buttons-col">
+      <button id="copy-btn" title="Copy selected object(s)" style="display:flex;align-items:center;justify-content:center">
+        <img src="IMG_2851.png" alt="Copy" />
+      </button>
+      <button id="paste-btn" title="Paste copied object(s)" style="display:flex;align-items:center;justify-content:center">
+        <img src="IMG_2852.png" alt="Paste" />
+      </button>
+      <button id="alpha-btn" title="Set alpha for selected object" style="display:flex;align-items:center;justify-content:center">
+        <img src="IMG_2848.png" alt="Alpha" />
+      </button>
+      <!-- NEW: side-toggle button moved to left column so it appears on the left row -->
+      <button id="side-toggle-btn" title="Toggle half shape" style="margin-top:8px">
+        <img src="IMG_3081.png" alt="Side Toggle" />
+      </button>
+    </div>
+    <div class="edit-buttons-col">
+      <button id="copy-paste-btn" title="Copy/Paste selected object">
+        <img src="IMG_2817.png" alt="Copy Paste" />
+      </button>
+      <button id="edit-object-btn" title="Edit selected object(s)">
+        <img src="IMG_2804.png" alt="Edit Object" />
+      </button>
+      <button id="edit-group-btn" title="Edit group for selected object(s)">
+        <img src="IMG_2813.png" alt="Edit Group" />
+      </button>
+      <!-- new top-right deselect button (bottom of right column) -->
+      <button id="deselect-topright-btn" title="Deselect" style="margin-top:6px">
+        <img src="IMG_2854.png" alt="Deselect" />
+      </button>
+    </div>
+  </div>
+</body>
+</html>
